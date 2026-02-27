@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -36,6 +37,9 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:16px 2
 .tab{padding:6px 14px;border-radius:6px;border:1px solid transparent;font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:var(--muted);transition:all .12s;font-family:'DM Sans',sans-serif}
 .tab.active{background:var(--s2);border-color:var(--border);color:var(--text)}
 .tab:hover:not(.active){color:var(--text)}
+.fq{padding:5px 12px;border-radius:6px;border:1px solid transparent;font-size:11px;font-weight:600;cursor:pointer;background:transparent;color:var(--muted);transition:all .12s;font-family:'DM Mono',monospace}
+.fq.active{background:var(--s2);border-color:var(--border);color:var(--text)}
+.fq:hover:not(.active){color:var(--text)}
 .hm-grid{display:grid;grid-template-columns:80px repeat(3,1fr);gap:8px;margin-bottom:28px}
 .hm-th{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);text-align:center;padding:6px 0}
 .hm-row-label{font-size:12px;font-weight:600;display:flex;align-items:center;color:var(--muted)}
@@ -84,11 +88,20 @@ tr:hover td{background:var(--s1)}
   </div>
   <div class="section">
     <div class="section-head">heatmap atual</div>
-    <div class="tabs">
-      <button class="tab active" onclick="setProfile('importador',this)">Importador</button>
-      <button class="tab" onclick="setProfile('agente_turismo',this)">Ag. Turismo</button>
-      <button class="tab" onclick="setProfile('exportador',this)">Exportador</button>
-      <button class="tab" onclick="setProfile('freelancer',this)">Freelancer</button>
+    <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center">
+      <div class="tabs" style="margin-bottom:0">
+        <button class="tab active" onclick="setProfile('importador',this)">Importador</button>
+        <button class="tab" onclick="setProfile('agente_turismo',this)">Ag. Turismo</button>
+        <button class="tab" onclick="setProfile('exportador',this)">Exportador</button>
+        <button class="tab" onclick="setProfile('freelancer',this)">Freelancer</button>
+      </div>
+      <div id="freq-tabs" style="display:flex;gap:4px;margin-left:auto">
+        <button class="fq active" onclick="setFreq('all',this)">Todas</button>
+        <button class="fq" onclick="setFreq('daily',this)" style="color:var(--purple)">⚡ Daily</button>
+        <button class="fq" onclick="setFreq('weekly',this)">Weekly</button>
+        <button class="fq" onclick="setFreq('biweekly',this)">Biweekly</button>
+        <button class="fq" onclick="setFreq('monthly',this)">Monthly</button>
+      </div>
     </div>
     <div class="hm-grid" id="hm-grid">
       <div></div><div class="hm-th">weekly</div><div class="hm-th">biweekly</div><div class="hm-th">monthly</div>
@@ -115,7 +128,7 @@ const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6
 const FN=SB+'/functions/v1/treend-agent';
 const H={apikey:KEY,Authorization:'Bearer '+KEY};
 const SCHEDULE=[9,9.5,10,10.5,11,11.5,12,12.5,13,13.5,14,14.5,15,15.5,16,16.5,17,17.5,18,18.5];
-let profile='importador',scores=[];
+let profile='importador',freq='all',scores=[];
 
 const sb=async p=>{const r=await fetch(SB+'/rest/v1/'+p,{headers:H});if(!r.ok)throw new Error(await r.text());return r.json()};
 
@@ -151,19 +164,44 @@ function updateStats(){
 }
 
 function setProfile(p,el){profile=p;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderHeatmap();}
+function setFreq(f,el){freq=f;document.querySelectorAll('.fq').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderHeatmap();}
 function zone(x){return x>=65?'verde':x>=40?'amarelo':'vermelho';}
 
 function renderHeatmap(){
   const lk={};
   scores.filter(r=>r.profile_type===profile).forEach(r=>{lk[r.currency+'_'+r.frequency]=r;});
-  const freqs=['weekly','biweekly','monthly'],curs=['USD','EUR','GBP'];
-  let h='<div></div>';freqs.forEach(f=>h+='<div class="hm-th">'+f+'</div>');
+  
+  // Define colunas conforme filtro de frequência
+  let cols;
+  if(freq==='all') cols=['daily','weekly','biweekly','monthly'];
+  else if(freq==='daily') cols=['daily'];
+  else if(freq==='weekly') cols=['weekly'];
+  else if(freq==='biweekly') cols=['biweekly'];
+  else cols=['monthly'];
+
+  const curs=['USD','EUR','GBP'];
+  const colCount=cols.length;
+  
+  // Atualiza grid-template-columns dinamicamente
+  document.getElementById('hm-grid').style.gridTemplateColumns='80px repeat('+colCount+',1fr)';
+
+  let h='<div></div>';
+  cols.forEach(f=>{
+    const label=f==='daily'?'⚡ daily 5m':f;
+    const style=f==='daily'?'color:var(--purple)':'';
+    h+='<div class="hm-th" style="'+style+'">'+label+'</div>';
+  });
   curs.forEach(c=>{
     h+='<div class="hm-row-label">'+c+'</div>';
-    freqs.forEach(f=>{
+    cols.forEach(f=>{
       const r=lk[c+'_'+f];
-      if(r){const z=zone(r.heat_x),s=Math.round(r.heat_x);h+='<div class="hm-cell '+z+'"><div class="hm-score">'+s+'</div><div class="hm-sub">x='+r.heat_x+' y='+r.heat_y+'</div><div class="hm-badge">'+z+'</div></div>';}
-      else h+='<div class="hm-cell"><div style="color:var(--muted);font-size:11px;padding-top:24px">—</div></div>';
+      if(r){
+        const z=zone(r.heat_x),s=Math.round(r.heat_x);
+        const dailyStyle=f==='daily'?'border-color:rgba(188,140,255,.35);background:rgba(188,140,255,.05)':'';
+        h+='<div class="hm-cell '+z+'" style="'+dailyStyle+'"><div class="hm-score">'+s+'</div><div class="hm-sub">x='+r.heat_x+' y='+r.heat_y+'</div><div class="hm-badge">'+z+(f==='daily'?' 5m':'')+'</div></div>';
+      } else {
+        h+='<div class="hm-cell"><div style="color:var(--muted);font-size:11px;padding-top:24px">—</div></div>';
+      }
     });
   });
   document.getElementById('hm-grid').innerHTML=h;
