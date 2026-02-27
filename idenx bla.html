@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Treend Agent · Control Center</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap');
+:root{--bg:#080c10;--s1:#0d1117;--s2:#161b22;--border:#21262d;--text:#e6edf3;--muted:#484f58;--green:#3fb950;--yellow:#d29922;--red:#f85149;--blue:#58a6ff;--purple:#bc8cff}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh}
+.wrap{max-width:1080px;margin:0 auto;padding:32px 20px}
+nav{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);background:var(--s1);position:sticky;top:0;z-index:100}
+.brand{font-family:'DM Mono',monospace;font-size:14px;display:flex;align-items:center;gap:10px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.clock{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:24px 0}
+.stat{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:18px 20px}
+.stat-label{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+.stat-val{font-size:26px;font-weight:700;line-height:1;font-family:'DM Mono',monospace}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:5px;font-family:'DM Mono',monospace}
+.c-green{color:var(--green)}.c-blue{color:var(--blue)}.c-purple{color:var(--purple)}
+.actions{display:flex;gap:10px;align-items:center;margin-bottom:24px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:8px;border:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn-run{background:var(--green);color:#000}.btn-run:hover{filter:brightness(1.1)}.btn-run:disabled{opacity:.5;cursor:not-allowed;filter:none}
+.btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border)}.btn-ghost:hover{border-color:var(--blue);color:var(--blue)}
+.spin{width:14px;height:14px;border:2px solid rgba(0,0,0,.3);border-top-color:#000;border-radius:50%;animation:spin .6s linear infinite;display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+.badge-next{margin-left:auto;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)}
+.badge-next span{color:var(--purple);font-weight:600}
+.section-head{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.section-head::after{content:'';flex:1;height:1px;background:var(--border)}
+.section{margin-bottom:32px}
+.tabs{display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap}
+.tab{padding:6px 14px;border-radius:6px;border:1px solid transparent;font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:var(--muted);transition:all .12s;font-family:'DM Sans',sans-serif}
+.tab.active{background:var(--s2);border-color:var(--border);color:var(--text)}
+.tab:hover:not(.active){color:var(--text)}
+.hm-grid{display:grid;grid-template-columns:80px repeat(3,1fr);gap:8px;margin-bottom:28px}
+.hm-th{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);text-align:center;padding:6px 0}
+.hm-row-label{font-size:12px;font-weight:600;display:flex;align-items:center;color:var(--muted)}
+.hm-cell{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px 10px;text-align:center;transition:transform .15s}
+.hm-cell:hover{transform:scale(1.04)}
+.verde{border-color:rgba(63,185,80,.35);background:rgba(63,185,80,.06)}
+.amarelo{border-color:rgba(210,153,34,.35);background:rgba(210,153,34,.06)}
+.vermelho{border-color:rgba(248,81,73,.35);background:rgba(248,81,73,.06)}
+.hm-score{font-size:24px;font-weight:700;font-family:'DM Mono',monospace;line-height:1}
+.verde .hm-score{color:var(--green)}.amarelo .hm-score{color:var(--yellow)}.vermelho .hm-score{color:var(--red)}
+.hm-sub{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:3px}
+.hm-badge{font-size:9px;font-family:'DM Mono',monospace;margin-top:5px;padding:2px 6px;border-radius:4px;display:inline-block}
+.verde .hm-badge{background:rgba(63,185,80,.12);color:var(--green)}
+.amarelo .hm-badge{background:rgba(210,153,34,.12);color:var(--yellow)}
+.vermelho .hm-badge{background:rgba(248,81,73,.12);color:var(--red)}
+.skeleton{background:var(--s1);border:1px solid var(--border);border-radius:10px;height:86px;animation:shimmer 1.4s ease-in-out infinite;background-image:linear-gradient(90deg,var(--s1) 25%,var(--s2) 50%,var(--s1) 75%);background-size:200% 100%}
+@keyframes shimmer{to{background-position:-200% 0}}
+.terminal{background:#010409;border:1px solid var(--border);border-radius:10px;padding:16px;font-family:'DM Mono',monospace;font-size:11.5px;height:260px;overflow-y:auto;line-height:1.7;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.l{display:block}.ok{color:var(--green)}.err{color:var(--red)}.warn{color:var(--yellow)}.info{color:var(--blue)}.dim{color:var(--muted)}.prompt{color:var(--purple)}
+.hist-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px;font-family:'DM Mono',monospace}
+th{color:var(--muted);font-weight:500;padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid rgba(33,38,45,.6)}
+tr:hover td{background:var(--s1)}
+.b{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;text-transform:uppercase}
+.b-g{background:rgba(63,185,80,.12);color:var(--green)}.b-y{background:rgba(210,153,34,.12);color:var(--yellow)}.b-r{background:rgba(248,81,73,.12);color:var(--red)}
+@media(max-width:640px){.stats{grid-template-columns:repeat(2,1fr)}.hm-grid{grid-template-columns:60px repeat(3,1fr)}}
+</style>
+</head>
+<body>
+<nav>
+  <div class="brand"><div class="dot"></div>treend-agent · control center</div>
+  <div class="clock" id="clock">—</div>
+</nav>
+<div class="wrap">
+  <div class="stats">
+    <div class="stat"><div class="stat-label">Última Execução</div><div class="stat-val c-blue" id="s-last">—</div><div class="stat-sub" id="s-last-date">aguardando...</div></div>
+    <div class="stat"><div class="stat-label">Publicados Hoje</div><div class="stat-val c-green" id="s-pub">—</div><div class="stat-sub">registros atualizados</div></div>
+    <div class="stat"><div class="stat-label">Próxima Execução</div><div class="stat-val c-purple" id="s-next">—</div><div class="stat-sub" id="s-countdown">9h–18h30 · 30min</div></div>
+    <div class="stat"><div class="stat-label">Status</div><div class="stat-val c-green">OK</div><div class="stat-sub">seg–sex · horário comercial</div></div>
+  </div>
+  <div class="actions">
+    <button class="btn btn-run" id="btn-run" onclick="runAgent()"><span>▶ Executar Agora</span><div class="spin" id="spin"></div></button>
+    <button class="btn btn-ghost" onclick="loadAll()">↻ Atualizar</button>
+    <div class="badge-next">Auto: <span>9h–18h30 · a cada 30min · seg–sex</span></div>
+  </div>
+  <div class="section">
+    <div class="section-head">heatmap atual</div>
+    <div class="tabs">
+      <button class="tab active" onclick="setProfile('importador',this)">Importador</button>
+      <button class="tab" onclick="setProfile('agente_turismo',this)">Ag. Turismo</button>
+      <button class="tab" onclick="setProfile('exportador',this)">Exportador</button>
+      <button class="tab" onclick="setProfile('freelancer',this)">Freelancer</button>
+    </div>
+    <div class="hm-grid" id="hm-grid">
+      <div></div><div class="hm-th">weekly</div><div class="hm-th">biweekly</div><div class="hm-th">monthly</div>
+      <div class="hm-row-label">USD</div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+      <div class="hm-row-label">EUR</div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+      <div class="hm-row-label">GBP</div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-head">log de execução</div>
+    <div class="terminal" id="terminal"><span class="l dim"><span class="prompt">$</span> treend-agent · carregando...</span></div>
+  </div>
+  <div class="section">
+    <div class="section-head">histórico recente</div>
+    <div class="hist-wrap">
+      <table><thead><tr><th>Data (BRT)</th><th>Perfil</th><th>Moeda</th><th>Freq.</th><th>X</th><th>Y</th><th>Vol%</th><th>Mom.</th><th>Zona</th></tr></thead>
+      <tbody id="hist-body"><tr><td colspan="9" style="color:var(--muted);text-align:center;padding:24px">Carregando...</td></tr></tbody></table>
+    </div>
+  </div>
+</div>
+<script>
+const SB='https://khbkfcdpgrksrrpocdvb.supabase.co';
+const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtoYmtmY2RwZ3Jrc3JycG9jZHZiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDc0MTk5MiwiZXhwIjoyMDg2MzE3OTkyfQ.d0tZocLNLeJrjDBmujc9SwztPDYE1TbY4Ge0fPylVxg';
+const FN=SB+'/functions/v1/treend-agent';
+const H={apikey:KEY,Authorization:'Bearer '+KEY};
+const SCHEDULE=[9,9.5,10,10.5,11,11.5,12,12.5,13,13.5,14,14.5,15,15.5,16,16.5,17,17.5,18,18.5];
+let profile='importador',scores=[];
+
+const sb=async p=>{const r=await fetch(SB+'/rest/v1/'+p,{headers:H});if(!r.ok)throw new Error(await r.text());return r.json()};
+
+async function runAgent(){
+  const btn=document.getElementById('btn-run'),sp=document.getElementById('spin');
+  btn.disabled=true;sp.style.display='block';btn.querySelector('span').textContent='Executando...';
+  log('info','→ Disparando execução manual...');
+  try{
+    const r=await fetch(FN,{method:'POST',headers:{...H,'Content-Type':'application/json'},body:'{}'});
+    const d=await r.json();
+    if(d.success){log('ok','✅ '+d.summary);(d.log||[]).forEach(l=>log('dim','  '+l));setTimeout(loadAll,1500);}
+    else log('err','❌ '+JSON.stringify(d));
+  }catch(e){log('err','❌ '+e.message);}
+  finally{btn.disabled=false;sp.style.display='none';btn.querySelector('span').textContent='▶ Executar Agora';}
+}
+
+async function loadAll(){
+  log('info','↻ Carregando dados...');
+  try{scores=await sb('heatmap_scores?select=*&order=updated_at.desc');renderHeatmap();updateStats();log('ok','✅ '+scores.length+' registros');}
+  catch(e){log('err','❌ '+e.message);}
+  try{const h=await sb('heatmap_history?select=*&order=published_at.desc&limit=50');renderHistory(h);}
+  catch(e){log('warn','⚠ histórico: '+e.message);}
+}
+
+function updateStats(){
+  if(!scores.length)return;
+  const latest=scores.reduce((a,b)=>new Date(a.updated_at)>new Date(b.updated_at)?a:b);
+  const d=new Date(latest.updated_at);
+  document.getElementById('s-last').textContent=d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',timeZone:'America/Sao_Paulo'});
+  document.getElementById('s-last-date').textContent=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short',timeZone:'America/Sao_Paulo'});
+  const today=new Date().toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'});
+  document.getElementById('s-pub').textContent=scores.filter(r=>new Date(r.updated_at).toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'})===today).length;
+}
+
+function setProfile(p,el){profile=p;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderHeatmap();}
+function zone(x){return x>=65?'verde':x>=40?'amarelo':'vermelho';}
+
+function renderHeatmap(){
+  const lk={};
+  scores.filter(r=>r.profile_type===profile).forEach(r=>{lk[r.currency+'_'+r.frequency]=r;});
+  const freqs=['weekly','biweekly','monthly'],curs=['USD','EUR','GBP'];
+  let h='<div></div>';freqs.forEach(f=>h+='<div class="hm-th">'+f+'</div>');
+  curs.forEach(c=>{
+    h+='<div class="hm-row-label">'+c+'</div>';
+    freqs.forEach(f=>{
+      const r=lk[c+'_'+f];
+      if(r){const z=zone(r.heat_x),s=Math.round(r.heat_x);h+='<div class="hm-cell '+z+'"><div class="hm-score">'+s+'</div><div class="hm-sub">x='+r.heat_x+' y='+r.heat_y+'</div><div class="hm-badge">'+z+'</div></div>';}
+      else h+='<div class="hm-cell"><div style="color:var(--muted);font-size:11px;padding-top:24px">—</div></div>';
+    });
+  });
+  document.getElementById('hm-grid').innerHTML=h;
+}
+
+function renderHistory(hist){
+  if(!hist.length){document.getElementById('hist-body').innerHTML='<tr><td colspan="9" style="color:var(--muted);text-align:center;padding:24px">Sem histórico</td></tr>';return;}
+  document.getElementById('hist-body').innerHTML=hist.map(r=>{
+    const z=zone(r.heat_x),cls=z==='verde'?'b-g':z==='amarelo'?'b-y':'b-r';
+    const dt=new Date(r.published_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',timeZone:'America/Sao_Paulo'});
+    return '<tr><td>'+dt+'</td><td>'+r.profile_type+'</td><td>'+r.currency+'</td><td>'+r.frequency+'</td><td>'+r.heat_x+'</td><td>'+r.heat_y+'</td><td>'+(r.volatility_pct??'—')+'%</td><td>'+(r.momentum??'—')+'</td><td><span class="b '+cls+'">'+z+'</span></td></tr>';
+  }).join('');
+}
+
+function log(type,msg){
+  const t=document.getElementById('terminal');
+  const s=document.createElement('span');s.className='l '+type;
+  s.textContent='['+new Date().toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo'})+'] '+msg;
+  t.appendChild(document.createElement('br'));t.appendChild(s);t.scrollTop=t.scrollHeight;
+}
+
+function tick(){
+  const now=new Date();
+  document.getElementById('clock').textContent=now.toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo'});
+  const brtMs=now.getTime()-3*60*60*1000,brt=new Date(brtMs);
+  const brtH=brt.getUTCHours()+brt.getUTCMinutes()/60;
+  const isWd=brt.getUTCDay()>=1&&brt.getUTCDay()<=5;
+  const nextH=isWd?SCHEDULE.find(h=>h>brtH):null;
+  if(nextH){
+    const hh=Math.floor(nextH),mm=(nextH%1)*60;
+    const nb=new Date(brtMs);nb.setUTCHours(hh,mm,0,0);
+    if(nb.getTime()<=brtMs)nb.setUTCDate(nb.getUTCDate()+1);
+    const diff=nb.getTime()-brtMs,dh=Math.floor(diff/3600000),dm=Math.floor((diff%3600000)/60000),ds=Math.floor((diff%60000)/1000);
+    document.getElementById('s-next').textContent=String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');
+    document.getElementById('s-countdown').textContent='em '+dh+'h '+dm+'m '+ds+'s';
+  } else {
+    document.getElementById('s-next').textContent='09:00';
+    document.getElementById('s-countdown').textContent='retoma segunda';
+  }
+}
+
+tick();setInterval(tick,1000);
+loadAll();setInterval(loadAll,60000);
+</script>
+</body>
+</html>
