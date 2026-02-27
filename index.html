@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -7,7 +6,7 @@
 <title>Treend Agent · Control Center</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap');
-:root{--bg:#080c10;--s1:#0d1117;--s2:#161b22;--border:#21262d;--text:#e6edf3;--muted:#484f58;--green:#3fb950;--yellow:#d29922;--red:#f85149;--blue:#58a6ff;--purple:#bc8cff}
+:root{--bg:#080c10;--s1:#0d1117;--s2:#161b22;--border:#21262d;--text:#e6edf3;--muted:#484f58;--green:#3fb950;--yellow:#d29922;--red:#f85149;--blue:#58a6ff;--purple:#bc8cff;--orange:#ff8c00}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh}
 .wrap{max-width:1080px;margin:0 auto;padding:32px 20px}
@@ -48,13 +47,15 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:16px 2
 .verde{border-color:rgba(63,185,80,.35);background:rgba(63,185,80,.06)}
 .amarelo{border-color:rgba(210,153,34,.35);background:rgba(210,153,34,.06)}
 .vermelho{border-color:rgba(248,81,73,.35);background:rgba(248,81,73,.06)}
+.laranja{border-color:rgba(255,140,0,.35);background:rgba(255,140,0,.06)}
 .hm-score{font-size:24px;font-weight:700;font-family:'DM Mono',monospace;line-height:1}
-.verde .hm-score{color:var(--green)}.amarelo .hm-score{color:var(--yellow)}.vermelho .hm-score{color:var(--red)}
+.verde .hm-score{color:var(--green)}.amarelo .hm-score{color:var(--yellow)}.vermelho .hm-score{color:var(--red)}.laranja .hm-score{color:#ff8c00}
 .hm-sub{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:3px}
 .hm-badge{font-size:9px;font-family:'DM Mono',monospace;margin-top:5px;padding:2px 6px;border-radius:4px;display:inline-block}
 .verde .hm-badge{background:rgba(63,185,80,.12);color:var(--green)}
 .amarelo .hm-badge{background:rgba(210,153,34,.12);color:var(--yellow)}
 .vermelho .hm-badge{background:rgba(248,81,73,.12);color:var(--red)}
+.laranja .hm-badge{background:rgba(255,140,0,.12);color:#ff8c00}
 .skeleton{background:var(--s1);border:1px solid var(--border);border-radius:10px;height:86px;animation:shimmer 1.4s ease-in-out infinite;background-image:linear-gradient(90deg,var(--s1) 25%,var(--s2) 50%,var(--s1) 75%);background-size:200% 100%}
 @keyframes shimmer{to{background-position:-200% 0}}
 .terminal{background:#010409;border:1px solid var(--border);border-radius:10px;padding:16px;font-family:'DM Mono',monospace;font-size:11.5px;height:260px;overflow-y:auto;line-height:1.7;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
@@ -65,7 +66,7 @@ th{color:var(--muted);font-weight:500;padding:8px 12px;text-align:left;border-bo
 td{padding:9px 12px;border-bottom:1px solid rgba(33,38,45,.6)}
 tr:hover td{background:var(--s1)}
 .b{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;text-transform:uppercase}
-.b-g{background:rgba(63,185,80,.12);color:var(--green)}.b-y{background:rgba(210,153,34,.12);color:var(--yellow)}.b-r{background:rgba(248,81,73,.12);color:var(--red)}
+.b-g{background:rgba(63,185,80,.12);color:var(--green)}.b-y{background:rgba(210,153,34,.12);color:var(--yellow)}.b-r{background:rgba(248,81,73,.12);color:var(--red)}.b-o{background:rgba(255,140,0,.12);color:#ff8c00}
 @media(max-width:640px){.stats{grid-template-columns:repeat(2,1fr)}.hm-grid{grid-template-columns:60px repeat(3,1fr)}}
 </style>
 </head>
@@ -165,26 +166,34 @@ function updateStats(){
 
 function setProfile(p,el){profile=p;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderHeatmap();}
 function setFreq(f,el){freq=f;document.querySelectorAll('.fq').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderHeatmap();}
-function zone(x){return x>=65?'verde':x>=40?'amarelo':'vermelho';}
+
+function zone(heat_x,profile_type){
+  const isInverse=profile_type==='importador'||profile_type==='agente_turismo';
+  const rsi=isInverse?(95-heat_x)/0.9:(heat_x-5)/0.9;
+  if(isInverse){
+    if(rsi<=30)return 'verde';
+    if(rsi<40) return 'amarelo';
+    if(rsi<=60)return 'laranja';
+    return 'vermelho';
+  }else{
+    if(rsi<=30)return 'vermelho';
+    if(rsi<40) return 'laranja';
+    if(rsi<=60)return 'amarelo';
+    return 'verde';
+  }
+}
 
 function renderHeatmap(){
   const lk={};
   scores.filter(r=>r.profile_type===profile).forEach(r=>{lk[r.currency+'_'+r.frequency]=r;});
-  
-  // Define colunas conforme filtro de frequência
   let cols;
-  if(freq==='all') cols=['daily','weekly','biweekly','monthly'];
-  else if(freq==='daily') cols=['daily'];
-  else if(freq==='weekly') cols=['weekly'];
-  else if(freq==='biweekly') cols=['biweekly'];
+  if(freq==='all')cols=['daily','weekly','biweekly','monthly'];
+  else if(freq==='daily')cols=['daily'];
+  else if(freq==='weekly')cols=['weekly'];
+  else if(freq==='biweekly')cols=['biweekly'];
   else cols=['monthly'];
-
   const curs=['USD','EUR','GBP'];
-  const colCount=cols.length;
-  
-  // Atualiza grid-template-columns dinamicamente
-  document.getElementById('hm-grid').style.gridTemplateColumns='80px repeat('+colCount+',1fr)';
-
+  document.getElementById('hm-grid').style.gridTemplateColumns='80px repeat('+cols.length+',1fr)';
   let h='<div></div>';
   cols.forEach(f=>{
     const label=f==='daily'?'⚡ daily 5m':f;
@@ -196,10 +205,10 @@ function renderHeatmap(){
     cols.forEach(f=>{
       const r=lk[c+'_'+f];
       if(r){
-        const z=zone(r.heat_x),s=Math.round(r.heat_x);
+        const z=zone(r.heat_x,profile),s=Math.round(r.heat_x);
         const dailyStyle=f==='daily'?'border-color:rgba(188,140,255,.35);background:rgba(188,140,255,.05)':'';
         h+='<div class="hm-cell '+z+'" style="'+dailyStyle+'"><div class="hm-score">'+s+'</div><div class="hm-sub">x='+r.heat_x+' y='+r.heat_y+'</div><div class="hm-badge">'+z+(f==='daily'?' 5m':'')+'</div></div>';
-      } else {
+      }else{
         h+='<div class="hm-cell"><div style="color:var(--muted);font-size:11px;padding-top:24px">—</div></div>';
       }
     });
@@ -210,7 +219,7 @@ function renderHeatmap(){
 function renderHistory(hist){
   if(!hist.length){document.getElementById('hist-body').innerHTML='<tr><td colspan="9" style="color:var(--muted);text-align:center;padding:24px">Sem histórico</td></tr>';return;}
   document.getElementById('hist-body').innerHTML=hist.map(r=>{
-    const z=zone(r.heat_x),cls=z==='verde'?'b-g':z==='amarelo'?'b-y':'b-r';
+    const z=zone(r.heat_x,r.profile_type),cls=z==='verde'?'b-g':z==='amarelo'?'b-y':z==='laranja'?'b-o':'b-r';
     const dt=new Date(r.published_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',timeZone:'America/Sao_Paulo'});
     return '<tr><td>'+dt+'</td><td>'+r.profile_type+'</td><td>'+r.currency+'</td><td>'+r.frequency+'</td><td>'+r.heat_x+'</td><td>'+r.heat_y+'</td><td>'+(r.volatility_pct??'—')+'%</td><td>'+(r.momentum??'—')+'</td><td><span class="b '+cls+'">'+z+'</span></td></tr>';
   }).join('');
@@ -237,7 +246,7 @@ function tick(){
     const diff=nb.getTime()-brtMs,dh=Math.floor(diff/3600000),dm=Math.floor((diff%3600000)/60000),ds=Math.floor((diff%60000)/1000);
     document.getElementById('s-next').textContent=String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');
     document.getElementById('s-countdown').textContent='em '+dh+'h '+dm+'m '+ds+'s';
-  } else {
+  }else{
     document.getElementById('s-next').textContent='09:00';
     document.getElementById('s-countdown').textContent='retoma segunda';
   }
