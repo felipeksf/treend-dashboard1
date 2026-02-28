@@ -1,4 +1,4 @@
-```html
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -167,36 +167,39 @@ function updateStats(){
 
 function setProfile(p,el){profile=p;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderHeatmap();}
 function setFreq(f,el){freq=f;document.querySelectorAll('.fq').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderHeatmap();}
-
+// zone agora é calculada pelo backend e salva no score
+// No dashboard usamos heat_x como proxy de zona (sem info de perfil no frontend)
+// Para exibir corretamente, usamos profile_type + heat_x
 // Fórmula unificada — mesma lógica do backend
-// inverse (importador/agente): ≤35=verde, 36-49=amarelo, 50-64=laranja, ≥65=vermelho
-// direct (exportador/freelancer): ≤35=vermelho, 36-49=laranja, 50-64=amarelo, ≥65=verde
+// inverse (importador/agente): ≤35=verde,36-49=amarelo,50-64=laranja,≥65=vermelho
+// direct (exportador/freelancer): ≤35=vermelho,36-49=laranja,50-64=amarelo,≥65=verde
+// Fórmula unificada — score alto = sempre bom para o perfil
+// ≤35=vermelho, 36-49=laranja, 50-64=amarelo, ≥65=verde
 function zone(heat_x,profile_type){
-  const inv=profile_type==='importador'||profile_type==='agente_turismo';
-  if(inv){
-    if(heat_x<=35)return 'verde';
-    if(heat_x<=49)return 'amarelo';
-    if(heat_x<=64)return 'laranja';
-    return 'vermelho';
-  }else{
-    if(heat_x<=35)return 'vermelho';
-    if(heat_x<=49)return 'laranja';
-    if(heat_x<=64)return 'amarelo';
-    return 'verde';
-  }
+  if(heat_x<=35)return 'vermelho';
+  if(heat_x<=49)return 'laranja';
+  if(heat_x<=64)return 'amarelo';
+  return 'verde';
 }
 
 function renderHeatmap(){
   const lk={};
   scores.filter(r=>r.profile_type===profile).forEach(r=>{lk[r.currency+'_'+r.frequency]=r;});
+  
+  // Define colunas conforme filtro de frequência
   let cols;
-  if(freq==='all')cols=['daily','weekly','biweekly','monthly'];
-  else if(freq==='daily')cols=['daily'];
-  else if(freq==='weekly')cols=['weekly'];
-  else if(freq==='biweekly')cols=['biweekly'];
+  if(freq==='all') cols=['daily','weekly','biweekly','monthly'];
+  else if(freq==='daily') cols=['daily'];
+  else if(freq==='weekly') cols=['weekly'];
+  else if(freq==='biweekly') cols=['biweekly'];
   else cols=['monthly'];
+
   const curs=['USD','EUR','GBP'];
-  document.getElementById('hm-grid').style.gridTemplateColumns='80px repeat('+cols.length+',1fr)';
+  const colCount=cols.length;
+  
+  // Atualiza grid-template-columns dinamicamente
+  document.getElementById('hm-grid').style.gridTemplateColumns='80px repeat('+colCount+',1fr)';
+
   let h='<div></div>';
   cols.forEach(f=>{
     const label=f==='daily'?'⚡ daily 5m':f;
@@ -211,7 +214,7 @@ function renderHeatmap(){
         const z=zone(r.heat_x,profile),s=Math.round(r.heat_x);
         const dailyStyle=f==='daily'?'border-color:rgba(188,140,255,.35);background:rgba(188,140,255,.05)':'';
         h+='<div class="hm-cell '+z+'" style="'+dailyStyle+'"><div class="hm-score">'+s+'</div><div class="hm-sub">x='+r.heat_x+' y='+r.heat_y+'</div><div class="hm-badge">'+z+(f==='daily'?' 5m':'')+'</div></div>';
-      }else{
+      } else {
         h+='<div class="hm-cell"><div style="color:var(--muted);font-size:11px;padding-top:24px">—</div></div>';
       }
     });
@@ -249,7 +252,7 @@ function tick(){
     const diff=nb.getTime()-brtMs,dh=Math.floor(diff/3600000),dm=Math.floor((diff%3600000)/60000),ds=Math.floor((diff%60000)/1000);
     document.getElementById('s-next').textContent=String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');
     document.getElementById('s-countdown').textContent='em '+dh+'h '+dm+'m '+ds+'s';
-  }else{
+  } else {
     document.getElementById('s-next').textContent='09:00';
     document.getElementById('s-countdown').textContent='retoma segunda';
   }
@@ -260,4 +263,3 @@ loadAll();setInterval(loadAll,60000);
 </script>
 </body>
 </html>
-```
