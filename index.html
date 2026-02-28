@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -169,16 +170,15 @@ function setFreq(f,el){freq=f;document.querySelectorAll('.fq').forEach(t=>t.clas
 
 function zone(heat_x,profile_type){
   const isInverse=profile_type==='importador'||profile_type==='agente_turismo';
-  const rsi=isInverse?(95-heat_x)/0.9:(heat_x-5)/0.9;
   if(isInverse){
-    if(rsi<=30)return 'verde';
-    if(rsi<40) return 'amarelo';
-    if(rsi<=60)return 'laranja';
+    if(heat_x<=35)return 'verde';
+    if(heat_x<=49)return 'amarelo';
+    if(heat_x<=64)return 'laranja';
     return 'vermelho';
   }else{
-    if(rsi<=30)return 'vermelho';
-    if(rsi<40) return 'laranja';
-    if(rsi<=60)return 'amarelo';
+    if(heat_x<=35)return 'vermelho';
+    if(heat_x<=49)return 'laranja';
+    if(heat_x<=64)return 'amarelo';
     return 'verde';
   }
 }
@@ -257,3 +257,4 @@ loadAll();setInterval(loadAll,60000);
 </script>
 </body>
 </html>
+```
