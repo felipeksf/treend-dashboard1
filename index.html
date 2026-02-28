@@ -168,9 +168,12 @@ function updateStats(){
 function setProfile(p,el){profile=p;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderHeatmap();}
 function setFreq(f,el){freq=f;document.querySelectorAll('.fq').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderHeatmap();}
 
+// Fórmula unificada — mesma lógica do backend
+// inverse (importador/agente): ≤35=verde, 36-49=amarelo, 50-64=laranja, ≥65=vermelho
+// direct (exportador/freelancer): ≤35=vermelho, 36-49=laranja, 50-64=amarelo, ≥65=verde
 function zone(heat_x,profile_type){
-  const isInverse=profile_type==='importador'||profile_type==='agente_turismo';
-  if(isInverse){
+  const inv=profile_type==='importador'||profile_type==='agente_turismo';
+  if(inv){
     if(heat_x<=35)return 'verde';
     if(heat_x<=49)return 'amarelo';
     if(heat_x<=64)return 'laranja';
