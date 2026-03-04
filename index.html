@@ -110,6 +110,7 @@ tr:hover td{background:var(--s1)}
       <div class="hm-row-label">USD</div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
       <div class="hm-row-label">EUR</div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
       <div class="hm-row-label">GBP</div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+      <div class="hm-row-label">USDT</div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
     </div>
   </div>
   <div class="section">
@@ -194,7 +195,7 @@ function renderHeatmap(){
   else if(freq==='biweekly') cols=['biweekly'];
   else cols=['monthly'];
 
-  const curs=['USD','EUR','GBP'];
+  const curs=['USD','EUR','GBP','USDT'];
   const colCount=cols.length;
   
   // Atualiza grid-template-columns dinamicamente
